@@ -1,0 +1,12 @@
+# Due to the model, the folder was too large for a github push
+# Here I select only the
+
+# Ignore all files by default
+*
+
+# Allow PythonJupyter Notebook, txt, md, and gitignore files
+!*.py
+!*.ipynb
+!*.md
+!.gitignore
+!*.txt
