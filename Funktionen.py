@@ -8,6 +8,14 @@ import pandas as pd
 
 # Alle Wörter im String, die weniger als 3 Buchstaben haben werden gelöscht
 def remove_short_words(s):
+    """removes words with less than 3 characters
+
+    Args:
+        s (string): string from free text field
+
+    Returns:
+        string: input string without short words
+    """    
     words = [word for word in s.split() if len(word) >= 3]
     out = " ".join(words)
     return out
@@ -15,6 +23,14 @@ def remove_short_words(s):
 
 # Diese Wörter werden ebenfalls entfernt
 def remove_unwanted_words(s):
+    """removes common words that we dont need
+
+    Args:
+        s string: string from free text field
+
+    Returns:
+        string: input string without unwanted words
+    """    
     unwanted_words_pattern = (
         r"wöchentlich|weekly|woche|allgemein|entsprechend|beendet|zyklus|version|"
         r"bis|mg|kg|m2|bezeichnet|entfällt|watch & wait|watch and wait"
@@ -26,6 +42,14 @@ def remove_unwanted_words(s):
 # Da "5 FU" durch die Funktion "remove_short_words()" entfernt werden würde,
 # habe ich diese strings vorher in die gemeinte Substanz übersetzt
 def find_5FU(s):
+    """ 5FU is a common abbreviation for Fluorouracil. The functions finds it and replaces it with the full name.
+
+    Args:
+        s (string): input string from free text field
+
+    Returns:
+        string: Same string or string with 5-FU replaced by full name
+    """    
     fluorouracil_pattern = (
         r"5 fu|5fu|5-fu|5_fu|Fluoruracil|flourouracil|5-fluoruuracil|"
         r"5-fluoro-uracil|5-fluoruuracil|5-fluoruracil|floururacil|"
@@ -36,6 +60,14 @@ def find_5FU(s):
 
 
 def find_gemcitabin(s):
+    """To fix common typos for Gemcitabin 
+
+    Args:
+        s (string): input string from free text field
+
+    Returns:
+        string: Same string or string with fixed typo
+    """    
     gemcitabin_pattern = r"Gemcibatin|Gemcibatine|Gemcibatine Mono|Gemcibatin Mono"
     s = re.sub(gemcitabin_pattern, "gemcitabin", s, flags=re.IGNORECASE)
     return s
@@ -43,6 +75,14 @@ def find_gemcitabin(s):
 
 # Hier sollen Symbole wie das Copyright Symbol entfernt werden
 def remove_special_symbols(s):
+    """removes common symbols that hinder matching
+
+    Args:
+        s (string): input string from free text field
+
+    Returns:
+        string: Same string without symbols
+    """    
     special_symbols_pattern = r"[\u24C0-\u24FF\u2100-\u214F\u2200-\u22FF\u2300-\u23FF\u2600-\u26FF\u2700-\u27BF\u2B50\u2B06]|m²"
 
     return re.sub(special_symbols_pattern, "", s)
@@ -50,7 +90,20 @@ def remove_special_symbols(s):
 
 # Funktion zum Aufräumen der Input strings
 def preprocessing_func(input_col, split_string=True, split_pattern=r"[;,]"):
+    """Applies all the little functions from above to the the input column with free text
 
+    Args:
+        input_col (string): This is the PandasDataFrame input column with free text
+        split_string (bool, optional): To split the string in case more substances are listed in one row. Defaults to True.
+        split_pattern (regexp, optional): Put the regex for splitting. Defaults to r"[;,]" means split by ; and ,
+
+    Raises:
+        ValueError: In case user sets split_string to True but does not give a regex
+        ValueError: In case user provides wrong regex
+
+    Returns:
+        PandasDataFrame: processed string, in case split_string = True than we add rows, i.e., split string from one row into multiple rows
+    """
     if split_string:
         if split_pattern is None:
             raise ValueError(
@@ -96,6 +149,16 @@ def preprocessing_func(input_col, split_string=True, split_pattern=r"[;,]"):
 
 
 def find_matches(processed_df, reference_df, fuzzy_threshold=90):
+    """Find exact and fuzzy matches
+
+    Args:
+        processed_df (PandasDataFrame): The output of preprocessing_func()
+        reference_df (PandasDataFrame): The reference table with column names Substanz
+        fuzzy_threshold (int, optional): The threshold parameter for fuzzy matching. Defaults to 90.
+
+    Returns:
+        PandasDataFrame: Dataset with found matches in columns
+    """    
     reference_words = reference_df["Substanz"].tolist()
 
     exact_matches_list = []
@@ -155,6 +218,15 @@ def find_matches(processed_df, reference_df, fuzzy_threshold=90):
 
 # Funktion um Levenshtein in Prozent auszudrücken
 def calculate_similarity_percentage(original, best_match):
+    """calculates relatative Levenshtein Distance
+
+    Args:
+        original (PandasDataFrame column): The column with the original string from free text field 
+        best_match (PandasDataFrame column): The column with the best match
+
+    Returns:
+        The relative Levenshtein distance between original input and best match
+    """    
     if not original or not best_match:
         return 0
     distance = Levenshtein.distance(original, best_match)
@@ -164,6 +236,16 @@ def calculate_similarity_percentage(original, best_match):
 
 # Von allen Treffern soll nur der beste ausgewählt werden
 def calculate_best_match(processed_df, reference_df, split_string=True):
+    """calculates the best match from all found matches
+
+    Args:
+        processed_df (PandasDataFrame): The output from find_matches()
+        reference_df (PandasDataFrame): Reference table with column Substanz
+        split_string (bool, optional): The same setting as for the previous function. Defaults to True.
+
+    Returns:
+        PandasDataFrame: Adds the best match and the corresponding distance to orignal input string
+    """    
     best_matches = []
     lowest_distances = []
 
