@@ -318,8 +318,7 @@ def get_substances(
         fuzzy_threshold (int, optional): User can set the threshold for fuzzy matching. Defaults to 90.
 
     Raises:
-        ValueError: The length of the input PandaSeries must be equal to the length of the output
-        ValueError: The input_col must be equal to the column named Original in the output
+        ValueError: The length of the input substance file must be equal to the length of the output substance file 
 
     Returns:
         PandasDataFrame: DataFrame with ID, original input string, best match, and corresponing similarity measure score
@@ -339,18 +338,11 @@ def get_substances(
         processed_df=matches_found, split_string=split_string
     )
 
-    if len(clean_data) != len(best_matches):
-        raise ValueError(
-            "Something went wrong: input data has a different number of rows than ouput"
-        )
-
-    if not clean_data["Original"].equals(best_matches["Original"]):
-        raise ValueError(
-            "Something went wrong: column Original is not the same in input and output"
-        )
-
     out = best_matches.rename(
         columns={"Best_match": "Predicted", "LevenshteinPercent": "Similarity"}
     )
-
+    
+    if len(input_col) != len(out):
+        raise ValueError(f"Something went wrong: Length of input is {len(input_col)} and length of output is {len(out)}")
+    
     return out.drop(columns=["Processed"])
